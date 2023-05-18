@@ -2,6 +2,8 @@ let canvas = document.getElementById("canvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 let ctx = canvas.getContext("2d");
+const checkPoint = new Image();
+checkPoint.src = "round-star (1).png";
 
 blackObjectArray = [];
 whiteObjectArray = [];
@@ -32,9 +34,9 @@ function Draw(x, y, height, width, color) {
   }
 }
 
-Draw(0, canvas.height - 200, 450, 200, "black");
 
-Draw(750, canvas.height - 200, 450, 200, "black");
+
+
 
 const cube = {
   x: 100,
@@ -57,39 +59,42 @@ let isCollidingLeft = false;
 let isJumping = false;
 let groundValidator = false;
 
+
 function movement() {
   groundValidator = false;
-  if (currentColor === "black") {
-    let bottom = cube.y + frameHeight;
-    let left = cube.x;
-    let right = cube.x + frameWidth;
-    let hitbox = cube.x + frameWidth / 2;
-    const collissionMargin = 80;
+  isCollidingLeft = false;
+  isCollidingRight = false;
+  let bottom = cube.y + frameHeight;
+  let left = cube.x;
+  let right = cube.x + frameWidth;
+  let hitbox = cube.x + frameWidth / 2;
+  const collissionMargin = 80;
+  console.log(blackObjectArray)
     blackObjectArray.forEach((blackRect) => {
       let rightEdge = blackRect.x + blackRect.height;
       if (
         rightEdge >= cube.x &&
         blackRect.x <= right &&
-        blackRect.y < bottom &&
+        bottom >= blackRect.y && bottom <= blackRect.y + blackRect.height &&
         blackRect.y - collissionMargin <= cube.y &&
-        left > blackRect.x + blackRect.height / 2
+        left >= blackRect.x + blackRect.width / 2
       ) {
+        console.log("hej")
         isCollidingRight = true;
       } else if (
         blackRect.x <= right &&
         rightEdge >= cube.x &&
-        blackRect.y < bottom &&
+        bottom > blackRect.y && bottom < blackRect.y + blackRect.height &&
         blackRect.y - collissionMargin <= cube.y
       ) {
         isCollidingLeft = true;
       }
-
       if (
         hitbox >= blackRect.x &&
         hitbox <= rightEdge &&
-        bottom >= blackRect.height
+        bottom >= blackRect.y
       ) {
-        if (bottom > blackRect.height && isGrounded === false && !isJumping) {
+        if (bottom > blackRect.y && isGrounded === false && !isJumping && bottom < blackRect.y + blackRect.height) {
           cube.ySpeed = 0;
           if (!groundValidator) {
             groundValidator = true;
@@ -100,8 +105,6 @@ function movement() {
         isGrounded = false;
       }
     });
-  }
-
   if (isAcceleratingRight && !isCollidingLeft) {
     cube.xSpeed += cube.acceleration;
   } else if (isAcceleratingLeft && !isCollidingRight) {
@@ -129,7 +132,7 @@ function movement() {
     cube.xSpeed = 0;
   }
 
-  if (isGrounded === false && !groundValidator) {
+  if (!groundValidator) {
     cube.ySpeed += cube.gravity;
   }
 
@@ -137,9 +140,7 @@ function movement() {
   cube.y += cube.ySpeed;
   isJumping = false;
 }
-
 function whiteDraw() {
-  ctx.fillstyle = "#d3d3d3";
   animate();
   whiteObjectArray.forEach((whiteRectangle) => {
     ctx.fillRect(
@@ -150,10 +151,16 @@ function whiteDraw() {
     );
   });
 }
-function blackDraw() {
-  ctx.fillStyle = "#5A5A5A";
+function draw() {
   animate();
+  debugger
+  if(currentColor === "black"){
+  ctx.fillStyle = "black";
+  }else {
+    ctx.fillStyle = "white"
+  }
   blackObjectArray.forEach((blackRectangle) => {
+    
     ctx.fillRect(
       blackRectangle.x,
       blackRectangle.y,
@@ -166,27 +173,61 @@ function blackDraw() {
 function updateCubePosition() {
   movement();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (currentColor == "black") {
-    blackDraw();
-  } else {
-    whiteDraw();
-  }
+  backgroundColor(currentColor)
+  draw();
 }
 
 function handleKeyDown(event) {
+   if (event.key === " ") {
+    if (currentColor === "black"){
+      if(frameY === 2){frameY = 3}
+      else if(frameY === 0){frameY = 1}
+      currentColor = "white"
+      drawMap("white")
+    }else{
+      if(frameY === 3){frameY = 2}
+      else if(frameY === 1){frameY = 0}
+      currentColor = "black"
+      drawMap("black")
+    }
+  } 
   if (event.key === "ArrowUp" && groundValidator === true) {
     isAcceleratingUp = true;
     isJumping = true;
     cube.ySpeed = -20;
   }
   if (event.key === "ArrowRight") {
-    isAcceleratingRight = true;
-    frameY = 2;
+      isAcceleratingRight = true;
+     if (currentColor === "black"){frameY = 2;} else if (currentColor === "white"){frameY = 3;} 
+    
   } else if (event.key === "ArrowLeft") {
-    isAcceleratingLeft = true;
-    frameY = 0;
+      isAcceleratingLeft = true;
+       if (currentColor === "black"){frameY = 0;} else if (currentColor === "white"){frameY = 1;} 
   }
 }
+
+function drawMap(color) {
+  ctx.drawImage(checkPoint,10,10,75,75); 
+  if(color === "white"){
+    blackObjectArray = []
+    Draw(400, canvas.height - 200, 200, 200, "black");
+    Draw(200, canvas.height - 700, 200, 200, "black");
+    Draw(1200, canvas.height - 300, 100, 100, "black");
+    Draw(700, canvas.height - 500, 100, 100, "black");
+  }else {
+    blackObjectArray = []
+    Draw(50, canvas.height - 100, 200, 200, "black");
+    Draw(500, canvas.height - 600, 100, 100, "black");
+    Draw(800, canvas.height - 200, 200, 200, "black");
+
+
+    Draw(1000, canvas.height - 430, 100, 100, "black");
+
+  }
+}
+
+drawMap("black")
+
 
 function handleKeyUp(event) {
   if (event.key === "ArrowRight") {
@@ -232,3 +273,12 @@ function animate() {
     }
   }
 }
+
+function backgroundColor(color){
+  console.log("banankontakt")
+  if(color === "black"){ctx.fillStyle = "white"} else {ctx.fillStyle = "black" }
+  ctx.fillRect(0,0,canvas.width, canvas.height)
+}
+
+
+
